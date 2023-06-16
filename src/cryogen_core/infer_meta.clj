@@ -37,10 +37,11 @@
          (warn (format "Failed to extract date from filename `%s`." (.getName page)))
          nil)))
 
-(defmacro walk-dom
+(def walk-dom
   "Return a flat sequence of all elements in this `dom` structure, recursively."
-  [dom]
-  `(tree-seq map? :content {:content ~dom}))
+  (memoize
+   (fn [dom]
+     (tree-seq map? :content {:content dom}))))
 
 (defn infer-image-data
   "Infer image data given this `dom` representation."
@@ -135,10 +136,10 @@
    been used to extract meta-data removed."
   ([dom] (clean dom dom))
   ([elt dom]
-  (cond
-    (map? elt) (when-not (redundant? elt dom) (assoc elt :content (clean (:content elt) dom)))
-    (coll? elt) (remove nil? (map #(clean % dom) elt))
-    :else elt)))
+   (cond
+     (map? elt) (when-not (redundant? elt dom) (assoc elt :content (clean (:content elt) dom)))
+     (coll? elt) (remove nil? (map #(clean % dom) elt))
+     :else elt)))
 
 (def infer-title
   "Infer the title of this page, ideally by extracting the first `H1` element from this
@@ -206,22 +207,57 @@
         tags (when tags-p (join ", " (reduce concat (map #(rest (:content %)) tags-p))))]
     (when tags (doall (set (map trim (split tags #",")))))))
 
+(defn infer-klipse-status
+  "`true` if there are any elements within this `dom` whose `class` attribute
+   contains the substring `klipse`."
+  [dom]
+  (boolean
+   (seq?
+    (filter
+     #(when (map? %) (re-find #"klipse" (-> % :attrs :class)))
+     (walk-dom dom)))))
+
+(def dflt-toc-min-subheads
+  "Default value for the minimum number of subheadings in a document at
+   which a table of contents is desirable."
+  4)
+
+(defn infer-toc-status
+  "`true` if the number of subheadings (i.e. elements with the tags `h2`-`h5`
+   inclusive) is equal to or exceeds the numberic value of `:toc-min-subheads`
+   in this `config`, or 4 if that key is not present in the `config`."
+  [dom config]
+  (let [toc-min-subheads (or
+                          (:toc-min-subheads config)
+                          dflt-toc-min-subheads)]
+    (boolean
+     (when
+      (and (number? toc-min-subheads)
+           (not (zero? toc-min-subheads)))
+       (>= (count
+            (filter
+             #(when (map? %) (#{:h2 :h3 :h4 :h5} (:tag %)))
+             (walk-dom dom)))
+           toc-min-subheads)))))
+
 (defn infer-meta
   "Infer metadata related to this `page`, assumed to be the name of a file in 
    this `markup`, given this `config`."
   [^java.io.File page config dom]
-    (let [metadata (assoc {}
-                          :author (infer-author page config)
-                          :date (infer-date page config)
-                          :description (infer-description page config dom)
-                          :image (infer-image-data dom config)
-                          :inferred-meta true
-                          :tags (infer-tags dom)
-                          :title (infer-title page config dom))]
-      (info (format "Inferred metadata for document %s dated %s."
-                    (:title metadata)
-                    (:date metadata)))
-      metadata))
+  (let [metadata (assoc {}
+                        :author (infer-author page config)
+                        :date (infer-date page config)
+                        :description (infer-description page config dom)
+                        :image (infer-image-data dom config)
+                        :inferred-meta true
+                        :klipse? (infer-klipse-status dom)
+                        :tags (infer-tags dom)
+                        :title (infer-title page config dom)
+                        :toc? (infer-toc-status dom config))]
+    (info (format "Inferred metadata for document %s dated %s."
+                  (:title metadata)
+                  (:date metadata)))
+    metadata))
 
 (defn using-inferred-metadata
   "An implementation of the guts of `cryogen-core.compiler.page-content` for
