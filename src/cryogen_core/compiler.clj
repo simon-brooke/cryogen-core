@@ -132,6 +132,9 @@
        (using-embedded-metadata page config markup)
        (catch Throwable embedded-fail
          (try
+           (yellow (format "Failed to find embedded markup in page `%s` because `%s`."
+                           (.getName page)
+                           (.getMessage embedded-fail)))
            (using-inferred-metadata page markup config)
            (catch Throwable inferred-fail
              (throw (ex-info "Could not compile content of page"

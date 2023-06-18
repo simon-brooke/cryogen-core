@@ -1,13 +1,10 @@
 (ns cryogen-core.infer-meta-test
   (:require [clojure.java.io :refer [file]]
             [clojure.test :refer :all]
-            [cryogen-core.infer-meta :refer [clean infer-image-data 
-                                             infer-klipse-status infer-title 
-                                             infer-toc-status main-title 
+            [cryogen-core.infer-meta :refer [clean infer-description
+                                             infer-title infer-toc-status main-title
                                              main-title?]]
-            [cryogen-core.markup :refer [Markup render-fn]]
-            [cryogen-core.util :refer [trimmed-html-snippet]])
-  (:import [java.io BufferedReader PushbackReader StringReader]))
+            [cryogen-core.markup :refer [Markup]]))
 
 (deftest infer-title-test
   (testing "infer-title from H1"
@@ -161,6 +158,25 @@
           actual (infer-toc-status dom config)]
       (is (= actual expected)
           "Seven in config, there are fewer than seven subheads, therefore false"))))
+
+(deftest infer-description-test
+    (let [first-p-content "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque malesuada et ante sit amet scelerisque. Nam a velit justo. Duis maximus quis quam non dapibus. Aenean auctor eros vel lacus dapibus imperdiet. Aliquam eu nibh pharetra, euismod arcu eget, ullamcorper lorem. Nulla at dictum lacus, a pretium velit. Ut ac est nec arcu dictum dapibus."
+          dom '({:tag :h1, 
+               :attrs {:id "test-document-with-subheads"},
+               :content ("Test document with subheads")}
+              {:tag :h2
+               :content ("Part one")}
+              {:tag :p,
+               :attrs nil,
+               :content (first-p-content)}
+              {:tag :h2
+               :content ("Part two")}
+              {:tag :p,
+               :attrs nil,
+               :content ("Phasellus mi est, blandit at sodales a, commodo et nisl. Pellentesque euismod urna id nibh laoreet aliquet. Sed eros ante, varius ut nunc nec, varius pulvinar ex. Nam vitae dui non tortor rhoncus cursus non id elit. Quisque ullamcorper leo neque, eget ornare sem dictum ac. In consectetur, lacus at varius consectetur, sem elit dapibus risus, sit amet dapibus elit metus imperdiet orci. Maecenas sagittis nisi tellus, nec vestibulum lectus mollis ac. Praesent in mauris quis leo mattis laoreet dictum eget arcu.")})
+          expected first-p-content
+          actual (infer-description nil {} dom)]
+      (is (= actual expected))))
 
 (defn- markdown []
   (reify Markup

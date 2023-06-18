@@ -1,19 +1,19 @@
 (ns cryogen-core.infer-meta
-  (:require [clojure.java.io :refer [reader]]
-            [clojure.string :refer [capitalize join lower-case replace
-                                    split starts-with? trim]]
+  (:require [cc.journeyman.real-name.core :refer [get-real-name]]
+            [clojure.java.io :refer [reader]]
+            [clojure.pprint :refer [pprint]]
+            [clojure.string :refer [capitalize join lower-case replace split
+                                    starts-with? trim]]
             [cryogen-core.console-message :refer [error info warn]]
             [cryogen-core.io :refer [get-resource]]
-            [cryogen-core.markup :refer [exts render-fn]]
+            [cryogen-core.markup :refer [render-fn]]
             [cryogen-core.util :refer [enlive->plain-text parse-post-date
-                                       re-pattern-from-exts
-                                       trimmed-html-snippet]]
+                                       re-pattern-from-exts trimmed-html-snippet]]
             [mikera.image.core :refer [height load-image width]]
-            [pantomime.mime :refer [mime-type-of]]
-            [cc.journeyman.real-name.core :refer [get-real-name]])
-  (:import [java.util Date Locale]
-           [java.nio.file Files FileSystems LinkOption]
-           [java.nio.file.attribute FileOwnerAttributeView]))
+            [pantomime.mime :refer [mime-type-of]])
+  (:import [java.nio.file FileSystems Files LinkOption]
+           [java.nio.file.attribute FileOwnerAttributeView]
+           [java.util Date Locale]))
 
 ;; see https://gist.github.com/saidone75/0844f40d5f2d8b129cb7302b7cf40541
 (defn file-attribute
@@ -164,7 +164,8 @@
 
 (defn infer-description
   [^java.io.File page config dom]
-  (let [p (first (filter #(= (:tag %) :p)
+  (let [p (first (filter #(and (= (:tag %) :p) 
+                               (every? string? (:content %)))
                          (walk-dom dom)))]
     (if p (enlive->plain-text (:content p))
         (infer-title page config dom))))
@@ -211,11 +212,15 @@
   "`true` if there are any elements within this `dom` whose `class` attribute
    contains the substring `klipse`."
   [dom]
-  (boolean
-   (seq?
-    (filter
-     #(when (map? %) (re-find #"klipse" (-> % :attrs :class)))
-     (walk-dom dom)))))
+  (not
+   (empty? 
+    (reduce
+     concat
+     (filter
+     #(when (map? %) 
+        (let [class (-> % :attrs :class)] 
+          (when class (re-find #"klipse" class))))
+     (walk-dom dom))))))
 
 (def dflt-toc-min-subheads
   "Default value for the minimum number of subheadings in a document at
@@ -257,6 +262,7 @@
     (info (format "Inferred metadata for document %s dated %s."
                   (:title metadata)
                   (:date metadata)))
+    (info (with-out-str (pprint metadata)))
     metadata))
 
 (defn using-inferred-metadata
