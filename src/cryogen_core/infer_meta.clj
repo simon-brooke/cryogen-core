@@ -87,7 +87,7 @@
    hyphens substituted for spaces."
   [^java.io.File page meta config]
   (if (:title meta)
-    (str (:date meta) "-" (replace (lower-case (:title meta)) #" +" "-") ".html")
+    (str (:date meta) "-" (replace (replace (lower-case (:title meta)) #"\p{Punct}+" "") #" +" "-") ".html")
     (let [re-root     (re-pattern (str "^.*?(" (:page-root config) "|" (:post-root config) ")/"))
           page-fwd    (replace (str page) "\\" "/")  ;; make it work on Windows
           page-name   (if (:collapse-subdirs? config)
