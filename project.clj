@@ -1,4 +1,4 @@
-(defproject cryogen-core "0.4.2-simon-brooke"
+(defproject cryogen-core "0.4.4-simon-brooke"
             :description "Cryogen's compiler"
             :url "https://github.com/cryogen-project/cryogen-core"
             :license {:name "Eclipse Public License"
