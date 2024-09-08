@@ -72,11 +72,14 @@
                              (remove empty?
                                      (map #(try
                                              ((-> delimiters % :parse-fn) lines)
-                                             (catch Throwable any (error (.getMessage any))))
+                                             (catch Throwable any (warn (.getMessage any))))
                                           (keys delimiters))))))
          to-skip (or (:metadata-count metadata) 0)]
      (do (info (format "Skipping %d characters of metadata" to-skip))
+         ;; skip the metadata in the pushback buffer...
          (take to-skip rdr)
-         (s/validate schemas/MetaData metadata))))
+         (s/validate schemas/MetaData 
+                     ;; and drop the metadata count from what we pass back
+                     (dissoc metadata :metadata-count)))))
   ([^File f] 
      (read-page-meta f (java.io.PushbackReader. (io/reader f)))))

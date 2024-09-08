@@ -1,10 +1,10 @@
 (ns cryogen-core.compiler-test
-  (:require [clojure.java.io :as io]
-            [clojure.test :refer :all]
-            [me.raynes.fs :as fs]
-            [net.cgrand.enlive-html :as enlive]
+  (:require [clojure.test :refer :all]
             [cryogen-core.compiler :refer :all]
-            [cryogen-core.markup :as m])
+            [cryogen-core.markup :as m]
+            [cryogen-core.test-utils :refer [asciidoc create-entry markdown
+                                             reset-resources with-markup]]
+            [net.cgrand.enlive-html :as enlive])
   (:import [java.io File]))
 
 ; Test that the content-until-more-marker return nil or correct html text.
@@ -27,25 +27,6 @@ and more content.
   <div class=\"post-content\">
     this post has more marker
 </div></div>"))))
-
-(defn- markdown []
-  (reify m/Markup
-    (dir [this] "md")
-    (exts [this] #{".md"})))
-
-(defn- asciidoc []
-  (reify m/Markup
-    (dir [this] "asc")
-    (exts [this] #{".asc"})))
-
-(defn- create-entry [dir file]
-  (fs/mkdirs (File. dir))
-  (fs/create (File. (str dir File/separator file))))
-
-(defn- reset-resources []
-  (doseq [dir ["public" "content"]]
-    (fs/delete-dir dir)
-    (create-entry dir ".gitkeep")))
 
 (defn- check-for-pages [mu]
   (find-pages {:page-root "pages"} mu))
@@ -73,14 +54,6 @@ and more content.
               (is (= (.getAbsolutePath (File. (str dir File/separator file)))
                      (.getAbsolutePath (first entries)))))
             (reset-resources)))))))
-
-(defmacro with-markup [mu & body]
-  `(do
-     (m/register-markup ~mu)
-     (try
-       ~@body
-       (finally
-         (m/clear-registry)))))
 
 (defn- copy-and-check-markup-folders
   "Create entries in the markup folders. If `with-dir?` is set to true, include
@@ -122,16 +95,6 @@ and more content.
   (reset-resources))
 
 (deftest fail-test (testing "failure" (is true)))
-
-(defn reader-string [s]
-  (java.io.PushbackReader. (java.io.StringReader. s)))
-
-(deftest test-metadata-parsing
-  (testing "Parsing page/post configuration"
-    (let [valid-metadata   (reader-string "{:layout :post :title \"Hello World\"}")
-          invalid-metadata (reader-string "{:layout \"post\" :title \"Hello World\"}")]
-      (is (read-page-meta nil valid-metadata))
-      (is (thrown? Exception (read-page-meta nil invalid-metadata))))))
 
 (deftest tags-are-url-encoded
   (testing "URL encode tags"
