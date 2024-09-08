@@ -4,8 +4,10 @@
             :license {:name "Eclipse Public License"
                       :url  "http://www.eclipse.org/legal/epl-v10.html"}
             :dependencies [[org.clojure/clojure "1.11.3"]
+                           [org.clojure/data.json "2.5.0"]
                            [camel-snake-kebab "0.4.2"]
                            [cheshire "5.10.0"]
+                           [clj-commons/clj-yaml "1.0.27"]
                            [clj-rss "0.2.6"]
                            [clj-text-decoration "0.0.3"]
                            ;; used for mime type inference

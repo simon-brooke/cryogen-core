@@ -1,11 +1,13 @@
 (ns cryogen-core.infer-meta
   (:refer-clojure :exclude [replace])
-  (:require [clojure.java.io :refer [reader]]
+  (:require [clj-yaml.core :as yaml]
+            [clojure.data.json :as json]
+            [clojure.java.io :refer [reader]]
             [clojure.string :refer [capitalize join lower-case replace
                                     split starts-with? trim]]
             [cryogen-core.console-message :refer [error info warn]]
             [cryogen-core.io :refer [get-resource]]
-            [cryogen-core.markup :refer [exts render-fn]]
+            [cryogen-core.markup :refer [render-fn]]
             [cryogen-core.util :refer [enlive->plain-text parse-post-date
                                        re-pattern-from-exts
                                        trimmed-html-snippet]]
@@ -187,9 +189,6 @@
    `config`."
   [^java.io.File page config]
   (or
-   ;; this isn't good enough because so far it's only getting the username of
-   ;; the author; we need a platform independent way of resolving the real name,
-   ;; and so far I don't have that.
    (try (get-real-name (-> (Files/getFileAttributeView (.toPath page)
                                                        FileOwnerAttributeView
                                                        (into-array LinkOption []))
@@ -226,7 +225,7 @@
                   (:date metadata)))
     metadata))
 
-(defn file-extension 
+(defn file-extension
   "Return the extension, if any, of this `file-name`."
   [file-name]
   (second (re-find #"(\.[a-zA-Z0-9]+)$" file-name)))
@@ -238,14 +237,47 @@
     (info (format "Backing up %s to %s" (.getPath file) (.getPath backup-path)))
     (spit backup-path (slurp file))))
 
+(defn- yaml-frontmatter
+  "Return this `data` as a string formatted as YAML, with customary delimiters.
+   
+   [Zettlr](https://docs.zettlr.com/en/core/yaml-frontmatter/) and 
+   [PanDoc](https://pandoc.org/MANUAL.html#extension-yaml_metadata_block) 
+   expect document metadata to be formatted as YAML, with three hyphens 
+   as a line preceding, and three periods as a line terminating. They
+   also expect a field `keywords`, with similar semantics to our field
+   `:tags`."
+  [data]
+  (format "---\n%s\n...\n"
+          (yaml/generate-string (assoc data :keywords (:tags data))
+                                :dumper-options {:flow-style :block
+                                                 :indent 4
+                                                 :indicator-indent 2})))
+
+(defn- json-frontmatter 
+  "Return this `data` as a string formatted as JSON, with customary delimiters.
+   
+   In my specification for 
+   [feature #266](https://github.com/cryogen-project/cryogen/issues/266) I said
+   I would implement JSON metadata in the mistaken belief that this was what 
+   Zettlr wanted. I was wrong, but I've promised to implement it and it costs 
+   little."
+  [data]
+  (format "```json\n%s\n```\n"
+          (json/write-str data)))
+
 (defn- write-back-inferred-meta
   "Backup the file indicated by `page` to a new file with the same name but the
    extension `.bak`, and replace it with a file having the same content but 
    with this `meta-data` prefixed."
   [^File page meta-data config]
   (let [content (slurp page)
-        pretty-meta (with-out-str (pprint meta-data))]
-    (warn (format "%s: Prepending meta-data:\n %s" (.getName page) pretty-meta)) 
+        pretty-meta (case (:metadata-format config)
+                      :json (json-frontmatter meta-data)
+                      ;; YAML is understood by [pandoc]()
+                      :yaml (yaml-frontmatter meta-data)
+                      ;; default to EDN, as legacy
+                      (with-out-str (pprint meta-data)))]
+    (warn (format "%s: Prepending meta-data:\n %s" (.getName page) pretty-meta))
     (create-backup page)
     (spit page (str pretty-meta "\n\n" content))))
 

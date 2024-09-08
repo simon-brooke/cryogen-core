@@ -9,6 +9,7 @@
             [cryogen-core.io :as cryogen-io]
             [cryogen-core.klipse :as klipse]
             [cryogen-core.markup :as m]
+            [cryogen-core.read-meta :refer [read-page-meta]]
             [cryogen-core.rss :as rss]
             [cryogen-core.sass :as sass]
             [cryogen-core.schemas :as schemas]
@@ -20,7 +21,7 @@
             [net.cgrand.enlive-html :as enlive]
             [schema.core :as s]
             [selmer.parser :refer [cache-off!]]
-            [text-decoration.core :refer :all])
+            [text-decoration.core :refer [blue cyan green red yellow]])
   (:import (java.net URLEncoder)
            (java.util Date)
            java.util.Locale))
@@ -115,16 +116,7 @@
    (let [page-filename (page-file-name file-name uri-type params)]
      (string/join "/" (map url-encode (string/split page-filename #"/" -1))))))
 
-(defn read-page-meta
-  "Returns the clojure map from the top of a markdown page/post"
-  [page rdr]
-  (try
-    (let [metadata (read rdr)]
-      (s/validate schemas/MetaData metadata)
-      metadata)
-    (catch Exception e
-      (throw (ex-info (ex-message e)
-                      (assoc (ex-data e) :page page))))))
+
 
 (defn- using-embedded-metadata [page config markup]
   (with-open [rdr (java.io.PushbackReader. (io/reader page))]
@@ -349,7 +341,6 @@
    file-path
    (htmlize-content params)))
 
-
 (defn compile-pages
   "Compiles all the pages into html and spits them out into the public folder"
   [{:keys [blog-prefix page-root-uri debug?] :as params} pages]
@@ -497,6 +488,7 @@
                   (preview-dom blocks-per-preview (:content-dom page))
                   [(set description-include-elements)])
                  (util/enlive->plain-text)))))
+
 (defn compile-index
   "Compiles the index page into html and spits it out into the public folder"
   [{:keys [blog-prefix debug? home-page] :as params}]
