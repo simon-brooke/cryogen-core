@@ -1,0 +1,80 @@
+{:file-name "2024-09-09-test-file-to-check-that-inferred-metadata-is-functioning-correctly.html",
+   :page-meta
+   {:author "Simon Brooke",
+    :date "2024-09-09", :description "",
+    :image {:path "/img/Test-Logo.png",
+            :alt "Test image",
+            :width 64,
+            :height 30,
+            :type "image/png"},
+    :inferred-meta true,
+    :tags [""],
+    :title "Test file to check that inferred metadata is functioning correctly"},
+   :content-dom ({:tag :p,
+                  :attrs nil,
+                  :content ({:tag :img,
+                             :attrs {:src "/img/Test-Logo.png", :alt "Test image"},
+                             :content nil})}
+                 {:tag :h2,
+                  :attrs {:id "introduction:_what_metadata_is_expected?"},
+                  :content ("Introduction: what metadata is expected?")}
+                 {:tag :p,
+                  :attrs nil,
+                  :content ("Cryogen expects a "
+                            {:tag :a,
+                             :attrs {:href "http://cryogenweb.org/docs/writing-posts.html#post-contents"},
+                             :content ("number of items of metadata")}
+                            " to be declared as front-matter in a file. The default format of this frontmatter is "
+                            {:tag :a,
+                             :attrs {:href "https://github.com/edn-format/edn"},
+                             :content ("Extensible Data Notation")}
+                            ", but as of verion 0.2.7, "
+                            {:tag :a,
+                             :attrs {:href "https://yaml.org/"},
+                             :content ("YAML")}
+                            " and "
+                            {:tag :a,
+                             :attrs {:href "https://www.json.org/json-en.html"},
+                             :content ("JSON")}
+                            " may be used as alternatives. YAML is the metadata format used by "
+                            {:tag :a,
+                             :attrs {:href "https://docs.zettlr.com/en/core/yaml-frontmatter/"},
+                             :content ("Zettlr")}
+                            " and by "
+                            {:tag :a,
+                             :attrs {:href "https://pandoc.org/MANUAL.html#extension-yaml_metadata_block"},
+                             :content ("PanDoc")} ".")}
+                 {:tag :h2,
+                  :attrs {:id "how_is_metadata_inferred?"},
+                  :content ("How is metadata inferred?")} 
+                 {:tag :p, 
+                  :attrs nil, 
+                  :content ("Metadata is inferred by functions in the namespace " 
+                            {:tag :a, 
+                             :attrs {:href "https://github.com/cryogen-project/cryogen-core/blob/master/src/cryogen_core/infer_meta.clj"}, 
+                             :content ({:tag :code, :attrs nil, :content ("cryogen-core.infer-meta")})} 
+                            ". Specifically, the following items are inferred:")} 
+                 {:tag :h3, :attrs {:id "title"}, :content ("Title")} 
+                 {:tag :p, :attrs nil, :content ("Title is inferred from the first main headline in the document, if present; otherwise, from the file name of the document.")} 
+                 {:tag :h3, :attrs {:id "description"}, :content ("Description")} 
+                 {:tag :p, 
+                  :attrs nil, 
+                  :content ("Description is inferred from the first normal paragraph of the document, if present; otherwise, from the title.")} 
+                 {:tag :h3, :attrs {:id "date"}, :content ("Date")} 
+                 {:tag :p, 
+                  :attrs nil, 
+                  :content ("Date is inferred from the basename of the file, if there is a date part present (it is a convention of Cryogen file names that they should start with a date part), otherwise, from the creation date of the file.")} 
+                 {:tag :h3, :attrs {:id "author"}, :content ("Author")} 
+                 {:tag :p, 
+                  :attrs nil, 
+                  :content ("Author is inferred by querying the operating system for the real name associated with the user who is running the current execution. The mechanism I'm using is a " 
+                            {:tag :a, 
+                             :attrs {:href "https://github.com/simon-brooke/real-name"}, 
+                             :content ("library of my own")} 
+                            ", which should be reliable on UN*X like systems but may fail on Windows based systems with non-English locales.")} 
+                 {:tag :h3, :attrs {:id "tags"}, :content ("Tags")} 
+                 {:tag :p, 
+                  :attrs nil, 
+                  :content ("'Tags', in Cryogen, are used to create subject oriented sub-indexes of the site, dividing posts by topic. Alternative words for this might be 'subjects', or 'keywords'. Tags are inferred from lines in the file whose first token is the strongly emphasised string 'Tags:', if any. The remainders of these lines, after the first token, will be treated as comma separated values.")})} 
+
+                  

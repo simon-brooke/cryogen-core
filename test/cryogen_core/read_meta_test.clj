@@ -15,21 +15,29 @@
       (is (thrown? Exception (read-page-meta nil invalid-metadata))))))
 
 (deftest read-meta-test
-  (testing "Reading metadata in different formats"
-    (let [expected {:metadata-format :json, 
-                    :author "Simon Brooke", 
-                    :date "2024-09-05", 
-                    :description "Test document with JSON metadata", 
-                    :tags ["Test" "JSON"], 
-                    :title "JSON Metadata Test"}
-          actual (read-page-meta (resource "with-json-metadata.md"))]
-      (is (= actual expected)))
-    (let [expected {:metadata-format :yaml,
-                :author "Simon Brooke",
-                :date "2024-09-05",
-                :description "Test document with YAML metadata",
-                :tags ["Test" "YAML"],
-                :title "YAML Metadata Test"}
-      actual (read-page-meta (resource "with-yaml-metadata.md"))]
-  (is (= actual expected)))))
+  (let [common-metadata {:author "Simon Brooke",
+                         :date "2024-09-05"}]
+    (testing "Reading metadata in EDN format"
+      (let [expected (merge common-metadata
+                            {:metadata-format :edn,
+                             :description "Test document with EDN metadata",
+                             :tags ["Test" "EDN"],
+                             :title "EDN Metadata Test"})
+            actual (read-page-meta (resource "with-edn-metadata.md"))]
+        (is (= actual expected))))(testing "Reading metadata in JSON format"
+      (let [expected (merge common-metadata
+                            {:metadata-format :json,
+                             :description "Test document with JSON metadata",
+                             :tags ["Test" "JSON"],
+                             :title "JSON Metadata Test"})
+            actual (read-page-meta (resource "with-json-metadata.md"))]
+        (is (= actual expected))))
+    (testing "reading metadata in YAML format"
+      (let [expected (merge common-metadata
+                            {:metadata-format :yaml,
+                             :description "Test document with YAML metadata",
+                             :tags ["Test" "YAML"],
+                             :title "YAML Metadata Test"})
+            actual (read-page-meta (resource "with-yaml-metadata.md"))]
+        (is (= actual expected))))))
 

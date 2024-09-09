@@ -175,11 +175,12 @@
 
 (defn infer-date
   "The date is to be inferred from
-   1. the prefix of the basename of the file, if it matches `dddd-dd-dd`; or
+   1. the prefix of the basename of the file, if it matches the value of
+      `:post-date-format` in this `config`; or
    2. the creation date of the file, otherwise."
   [^java.io.File page config]
   (.format
-   (java.text.SimpleDateFormat. ^String (:post-date-format config) (Locale/getDefault))
+   (java.text.SimpleDateFormat. ^String (or (:post-date-format config) "yyyy-MM-dd") (Locale/getDefault))
    (or
     (maybe-extract-date-from-filename page config)
     (Date. (.toMillis (file-attribute page "creationTime"))))))
@@ -253,7 +254,7 @@
                                                  :indent 4
                                                  :indicator-indent 2})))
 
-(defn- json-frontmatter 
+(defn- json-frontmatter
   "Return this `data` as a string formatted as JSON, with customary delimiters.
    
    In my specification for 

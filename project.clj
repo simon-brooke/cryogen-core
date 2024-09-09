@@ -26,6 +26,11 @@
                  [selmer "1.12.61"]]
   :deploy-repositories [["snapshots" :clojars]
                         ["releases" :clojars]]
-  :profiles {:dev       {:resource-paths ["test/resources"]}
-             :repl {:resource-paths ["test/resources"]
-                    :source-paths ["src" "test"]}})
+  :profiles {:dev {:dependencies [[cryogen-markdown "0.1.13"]]
+                   :resource-paths ["test/resources"]
+                   :source-paths ["src" "test"]}
+             :repl {:dependencies [[cryogen-markdown "0.1.13"]]
+                    :resource-paths ["test/resources"]
+                    :source-paths ["src" "test"]}
+             :test {:dependencies [[cryogen-markdown "0.1.13"]]
+                          :resource-paths ["test/resources"]}})
