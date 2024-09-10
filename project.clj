@@ -23,7 +23,8 @@
                  [org.clojars.simon_brooke/real-name "1.0.1"]
                  [pandect "0.6.1"]
                  [prismatic/schema "1.1.12"]
-                 [selmer "1.12.61"]]
+                 [selmer "1.12.61"]
+                 [clojure.java-time "1.4.2"]]
   :deploy-repositories [["snapshots" :clojars]
                         ["releases" :clojars]]
   :profiles {:dev {:dependencies [[cryogen-markdown "0.1.13"]]
@@ -33,4 +34,4 @@
                     :resource-paths ["test/resources"]
                     :source-paths ["src" "test"]}
              :test {:dependencies [[cryogen-markdown "0.1.13"]]
-                          :resource-paths ["test/resources"]}})
+                    :resource-paths ["test/resources"]}})

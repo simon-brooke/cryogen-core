@@ -47,6 +47,35 @@
   [dom]
   `(tree-seq map? :content {:content ~dom}))
 
+(defn- extract-image-properties
+  [path content-path]
+  (when path
+    (try
+      (let [image-resource (get-resource content-path)]
+        (when
+         (.exists image-resource)
+          (load-image image-resource)))
+      (catch Exception e
+        (warn (format "Image `%s` was not found." content-path))
+        (error e)
+        nil))))
+
+(defn- infer-image-mime-type 
+  ;; TODO: 
+  ;; this essentially just wraps an existing library function in a try/catch.
+  ;; is it needed? Tika.detect( String) is not declared to throw an exception,
+  ;; although Tika.detect( File) may. However, we pass a String, so this
+  ;; could probably safely be removed.
+  [content-path]
+  (try
+    (mime-type-of content-path)
+    (catch Throwable e
+      (warn
+       (format "Could not detect mime type of `%s`."
+               content-path))
+      (error e)
+      nil)))
+
 (defn infer-image-data
   "Infer image data given this `dom` representation."
   [^java.io.File dom config]
@@ -61,23 +90,12 @@
                          src))
         ;; put paths are actually relative to the content directory
         content-path (when path (str "content" path))
-        image (when path (try
-                           (load-image (get-resource content-path))
-                           (catch Exception e
-                             (warn (format "Image `%s` was not found." content-path))
-                             (error e)
-                             nil)))
+        image-properties (extract-image-properties path content-path)
         alt (when img (-> img :attrs :alt))]
-    (if image
-      (let [h (when image (height image))
-            w (when image (width image))
-            mime (when image
-                   (try
-                     (mime-type-of content-path)
-                     (catch Throwable e
-                       (warn (format "Could not detect mime type of `%s`." content-path))
-                       (error e)
-                       nil)))]
+    (if image-properties
+      (let [h (when image-properties (height image-properties))
+            w (when image-properties (width image-properties))
+            mime (infer-image-mime-type content-path)]
         (assoc {} :path path
                :alt alt
                :width w

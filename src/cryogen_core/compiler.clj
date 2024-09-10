@@ -139,6 +139,8 @@
      (try
        (using-embedded-metadata page config markup)
        (catch Throwable embedded-fail
+         (yellow (format "Failed to read embedded metadata: `%s`" 
+                         (.getMessage embedded-fail)))
          (try
            (using-inferred-metadata page markup config)
            (catch Throwable inferred-fail

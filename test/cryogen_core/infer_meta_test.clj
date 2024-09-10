@@ -1,5 +1,6 @@
 (ns cryogen-core.infer-meta-test
   (:require [clojure.java.io :refer [file resource]]
+            [clojure.string :as s]
             [clojure.test :refer :all]
             [cryogen-core.infer-meta :refer [clean infer-image-data
                                              infer-title main-title
@@ -8,7 +9,8 @@
             [cryogen-core.markup :as m]
             [cryogen-core.test-utils :refer [copy-resource! reset-resources
                                              with-markup with-resources!]]
-            [cryogen-markdown.core :refer [markdown]]))
+            [cryogen-markdown.core :refer [markdown]]
+            [java-time.api :as jt]))
 
 (deftest infer-title-test
   (testing "infer-title from H1"
@@ -116,9 +118,22 @@
 
 (deftest integration-test
   (testing "exercise the whole thing"
-    (with-resources! [["inferring-metadata.md" "content"] ["Test-Logo.png" "content/img"]]
+    (with-resources! [["inferring-metadata.md" "content"]
+                      ["Test-Logo.png" "content/img"]]
+      ;; OK, the problem here is that `sample-dom.edn` contains embedded 
+      ;; dates taken from the date this test was written, but the actual
+      ;; file has been placed by the test harness so its date will be
+      ;; today's
       (with-markup (markdown)
-        (let [expected (read-string (slurp (resource "sample-dom.edn")))
-              actual (using-inferred-metadata (file "content/inferring-metadata.md") (first (m/markups))
-                                              (read-string (slurp (resource "config.edn"))))]
+        (let [today (jt/format "yyyy-MM-dd" (jt/local-date))
+              expected (read-string
+                        (s/replace
+                         (slurp
+                         (resource "sample-dom.edn"))
+                         #"[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                         today))
+              actual (using-inferred-metadata
+                      (file "content/inferring-metadata.md")
+                      (first (m/markups))
+                      (read-string (slurp (resource "config.edn"))))]
           (is (= actual expected)))))))
