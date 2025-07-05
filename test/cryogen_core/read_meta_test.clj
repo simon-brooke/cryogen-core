@@ -3,7 +3,6 @@
             [clojure.test :refer :all]
             [cryogen-core.read-meta :refer [read-page-meta]]))
 
-
 (defn- reader-string [s]
   (java.io.PushbackReader. (java.io.StringReader. s)))
 
@@ -24,7 +23,8 @@
                              :tags ["Test" "EDN"],
                              :title "EDN Metadata Test"})
             actual (read-page-meta (resource "with-edn-metadata.md"))]
-        (is (= actual expected))))(testing "Reading metadata in JSON format"
+        (is (= actual expected))))
+    (testing "Reading metadata in JSON format"
       (let [expected (merge common-metadata
                             {:metadata-format :json,
                              :description "Test document with JSON metadata",
